@@ -1,0 +1,21 @@
+services:
+  - name: zbook-backend
+    runtime: node
+    buildCommand: npm install && npm run seed
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        description: MongoDB connection string
+        required: true
+      - key: JWT_SECRET
+        description: JWT secret key
+        required: true
+      - key: JWT_EXPIRE
+        default: 7d
+      - key: PORT
+        default: "5000"
+      - key: NODE_ENV
+        default: production
+      - key: CLIENT_URL
+        description: Frontend URL for CORS
+        required: true
