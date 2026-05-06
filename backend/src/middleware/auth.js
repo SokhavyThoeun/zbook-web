@@ -4,6 +4,7 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../utils/auth');
 
 /**
  * Middleware to protect routes
@@ -22,7 +23,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.userId = decoded.userId;
     next();
   } catch (error) {

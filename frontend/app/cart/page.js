@@ -4,6 +4,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
@@ -15,8 +16,12 @@ import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total } = useCartStore();
-  const { token } = useAuthStore();
+  const { token, init } = useAuthStore();
   const router = useRouter();
+
+  useEffect(() => {
+    init();
+  }, [init]);
 
   const shippingCost = total > 50 ? 0 : 5;
   const tax = total * 0.1;

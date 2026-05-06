@@ -7,6 +7,23 @@
 const crypto = require('crypto');
 const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
 
+const categoryCoverImages = {
+  fiction: 'https://covers.openlibrary.org/b/title/The%20Hobbit-L.jpg',
+  'non-fiction': 'https://covers.openlibrary.org/b/title/Sapiens-L.jpg',
+  science: 'https://covers.openlibrary.org/b/title/A%20Brief%20History%20of%20Time-L.jpg',
+  history: 'https://covers.openlibrary.org/b/title/Guns%20Germs%20and%20Steel-L.jpg',
+  biography: 'https://covers.openlibrary.org/b/title/Steve%20Jobs-L.jpg',
+  romance: 'https://covers.openlibrary.org/b/title/Pride%20and%20Prejudice-L.jpg',
+  mystery: 'https://covers.openlibrary.org/b/title/Gone%20Girl-L.jpg',
+  'self-help': 'https://covers.openlibrary.org/b/title/Atomic%20Habits-L.jpg',
+  technology: 'https://covers.openlibrary.org/b/title/Clean%20Code-L.jpg',
+  business: 'https://covers.openlibrary.org/b/title/The%20Lean%20Startup-L.jpg',
+  adventure: 'https://covers.openlibrary.org/b/title/Into%20Thin%20Air-L.jpg',
+  'young-adult': 'https://covers.openlibrary.org/b/title/The%20Hunger%20Games-L.jpg',
+  children: 'https://covers.openlibrary.org/b/title/Charlotte%27s%20Web-L.jpg',
+  cambodian: 'https://covers.openlibrary.org/b/title/First%20They%20Killed%20My%20Father-L.jpg'
+};
+
 // Categories with metadata
 const categories = [
   { id: 'fiction', name: 'Fiction', description: 'Imaginative stories and novels', icon: 'BookOpen' },
@@ -24,6 +41,12 @@ const categories = [
   { id: 'children', name: 'Children', description: 'Books for young readers', icon: 'Baby' },
   { id: 'cambodian', name: 'Cambodian', description: 'Khmer literature and culture', icon: 'Flag' }
 ];
+
+categories.forEach((category, index) => {
+  category.coverImage = categoryCoverImages[category.id];
+  category.isActive = true;
+  category.sortOrder = index + 1;
+});
 
 // Book data generator
 const generateBooksData = () => {
@@ -815,19 +838,8 @@ const generateBooksData = () => {
     const isNew = index < 10 && Math.random() > 0.5;
     const isPopular = bookData.rating >= 4.6 || Math.random() > 0.6;
 
-    // Generate a consistent cover image based on book title
-    // Using Google Books API style covers with better quality
     const encodedTitle = encodeURIComponent(bookData.title);
-    const coverImages = [
-      `https://placehold.co/400x600/667eea/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/764ba2/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/f093fb/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/4facfe/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/43e97b/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/f093fb/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/4facfe/ffffff?text=${encodedTitle}`,
-      `https://placehold.co/400x600/667eea/ffffff?text=${encodedTitle}`,
-    ];
+    const coverImage = `https://covers.openlibrary.org/b/title/${encodedTitle}-L.jpg`;
 
     return {
       _id: generateId(),
@@ -840,7 +852,7 @@ const generateBooksData = () => {
       priceKHR: priceKHR,
       discountPercent: Math.random() > 0.8 ? Math.floor(Math.random() * 30) + 10 : 0,
       stock: stock,
-      coverImage: coverImages[index % coverImages.length],
+      coverImage,
       images: [],
       averageRating: bookData.rating,
       totalReviews: bookData.reviews,

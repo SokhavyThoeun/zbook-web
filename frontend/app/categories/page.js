@@ -7,9 +7,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, Newspaper, Flask, Clock, User, Heart, Search,
+  BookOpen, Newspaper, FlaskConical, Clock, User, Heart, Search,
   TrendingUp, Cpu, Briefcase, Compass, Smile, Baby, Flag,
   ChevronRight, ArrowRight
 } from 'lucide-react';
@@ -18,7 +19,8 @@ import { categoryAPI } from '@/lib/api';
 const iconMap = {
   BookOpen,
   Newspaper,
-  Flask,
+  Flask: FlaskConical,
+  FlaskConical,
   Clock,
   User,
   Heart,
@@ -123,6 +125,7 @@ export default function CategoriesPage() {
           {categories.map((category) => {
             const Icon = iconMap[category.icon] || BookOpen;
             const gradient = categoryColors[category.id] || 'from-purple-500 to-pink-500';
+            const coverImage = category.coverImage || `https://placehold.co/400x600/667eea/ffffff?text=${encodeURIComponent(category.name)}`;
 
             return (
               <motion.div
@@ -131,9 +134,19 @@ export default function CategoriesPage() {
               >
                 <Link href={`/books?category=${category.id}`}>
                   <div className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                    {/* Gradient Header */}
-                    <div className={`h-32 bg-gradient-to-r ${gradient} p-6 flex items-center justify-center`}>
-                      <Icon className="w-16 h-16 text-white opacity-90 group-hover:scale-110 transition-transform duration-300" />
+                    {/* Book Cover Header */}
+                    <div className={`relative h-44 bg-gradient-to-r ${gradient} overflow-hidden`}>
+                      <Image
+                        src={coverImage}
+                        alt={`${category.name} book cover`}
+                        width={400}
+                        height={600}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className={`absolute inset-0 bg-gradient-to-t ${gradient} opacity-70`} />
+                      <div className="absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-lg bg-white/90 shadow-md">
+                        <Icon className="w-7 h-7 text-purple-700" />
+                      </div>
                     </div>
 
                     {/* Content */}

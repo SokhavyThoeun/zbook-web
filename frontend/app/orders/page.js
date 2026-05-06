@@ -14,12 +14,19 @@ import { motion } from 'framer-motion';
 import { Package, ChevronRight } from 'lucide-react';
 
 export default function OrdersPage() {
-  const { token } = useAuthStore();
+  const { token, init } = useAuthStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     const fetchOrders = async () => {
       try {

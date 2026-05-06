@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heart, ShoppingCart, Search, Menu, X, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
@@ -14,6 +15,7 @@ import { debounce } from '@/lib/utils';
 import { bookAPI } from '@/lib/api';
 
 export default function Header() {
+  const router = useRouter();
   const { user, logout, token } = useAuthStore();
   const { items } = useCartStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -46,6 +48,19 @@ export default function Header() {
     handleSearch(e.target.value);
   };
 
+  const submitSearch = (e) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    if (query) {
+      router.push(`/books?search=${encodeURIComponent(query)}`);
+      setShowSuggestions(false);
+      setIsMenuOpen(false);
+    } else {
+      router.push('/books');
+      setIsMenuOpen(false);
+    }
+  };
+
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -63,7 +78,7 @@ export default function Header() {
           </Link>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md relative">
+          <form onSubmit={submitSearch} className="hidden md:flex flex-1 max-w-md relative">
             <div className="relative w-full">
               <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
               <input
@@ -101,7 +116,13 @@ export default function Header() {
                 </div>
               )}
             </div>
-          </div>
+          </form>
+
+          <nav className="hidden lg:flex items-center gap-5 text-sm font-semibold text-gray-700">
+            <Link href="/books" className="hover:text-purple-600 smooth-transition">Books</Link>
+            <Link href="/categories" className="hover:text-purple-600 smooth-transition">Categories</Link>
+            <Link href="/orders" className="hover:text-purple-600 smooth-transition">Orders</Link>
+          </nav>
 
           {/* Navigation Icons */}
           <div className="flex items-center gap-4">
@@ -170,15 +191,31 @@ export default function Header() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-white/20 space-y-3">
-            <div className="flex gap-2">
+            <form onSubmit={submitSearch} className="flex gap-2">
               <Search className="w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search books..."
+                value={searchQuery}
+                onChange={handleSearchChange}
                 className="flex-1 px-3 py-2 rounded-lg bg-white/50 border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
+            </form>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/books" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
+                Books
+              </Link>
+              <Link href="/categories" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
+                Categories
+              </Link>
+              <Link href="/wishlist" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
+                Wishlist
+              </Link>
+              <Link href="/orders" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
+                Orders
+              </Link>
             </div>
-            {!token && (
+            {!token ? (
               <div className="flex gap-2">
                 <Link
                   href="/login"
@@ -192,6 +229,25 @@ export default function Header() {
                 >
                   Sign Up
                 </Link>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Link
+                  href="/profile"
+                  className="flex-1 px-4 py-2 text-center text-purple-600 font-medium border border-purple-600 rounded-lg hover:bg-purple-50 smooth-transition"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex-1 px-4 py-2 text-center text-red-600 font-medium border border-red-200 rounded-lg hover:bg-red-50 smooth-transition"
+                >
+                  Logout
+                </button>
               </div>
             )}
           </div>

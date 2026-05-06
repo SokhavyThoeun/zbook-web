@@ -85,7 +85,7 @@ if (global.usingMockDB) {
       },
       paymentMethod: {
         type: String,
-        enum: ['credit-card', 'bank-transfer', 'cash-on-delivery', 'mobile-money'],
+        enum: ['credit-card', 'bank-transfer', 'cash-on-delivery', 'mobile-money', 'aba-qr', 'acleda-qr'],
         default: 'cash-on-delivery',
       },
       trackingNumber: String,

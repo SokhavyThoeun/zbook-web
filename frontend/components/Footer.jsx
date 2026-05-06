@@ -37,16 +37,16 @@ export default function Footer() {
           </p>
           {/* Social Links */}
           <div className="flex gap-4">
-            <Link href="#" className="text-gray-400 hover:text-white smooth-transition">
+            <Link href="https://twitter.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white smooth-transition" aria-label="Twitter">
               <Twitter className="w-5 h-5" />
             </Link>
-            <Link href="#" className="text-gray-400 hover:text-white smooth-transition">
+            <Link href="https://facebook.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white smooth-transition" aria-label="Facebook">
               <Facebook className="w-5 h-5" />
             </Link>
-            <Link href="#" className="text-gray-400 hover:text-white smooth-transition">
+            <Link href="https://instagram.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white smooth-transition" aria-label="Instagram">
               <Instagram className="w-5 h-5" />
             </Link>
-            <Link href="#" className="text-gray-400 hover:text-white smooth-transition">
+            <Link href="https://github.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white smooth-transition" aria-label="GitHub">
               <Github className="w-5 h-5" />
             </Link>
           </div>
@@ -85,7 +85,7 @@ export default function Footer() {
           <ul className="space-y-2 text-gray-400 text-sm">
             <li>
               <Link
-                href="/category/fiction"
+                href="/books?category=fiction"
                 className="hover:text-white smooth-transition"
               >
                 Fiction
@@ -93,7 +93,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/category/self-help"
+                href="/books?category=self-help"
                 className="hover:text-white smooth-transition"
               >
                 Self-Help
@@ -101,7 +101,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/category/technology"
+                href="/books?category=technology"
                 className="hover:text-white smooth-transition"
               >
                 Technology
@@ -109,7 +109,7 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                href="/category/cambodian"
+                href="/books?category=cambodian"
                 className="hover:text-white smooth-transition"
               >
                 Cambodian
@@ -145,15 +145,15 @@ export default function Footer() {
       {/* Bottom Footer */}
       <div className="border-t border-gray-700">
         <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm gap-4">
-          <p>&copy; {currentYear} Z Book. All rights reserved.</p>
+          <p>&copy; {currentYear} Z Book. Z BOOK WEB make by Sokhavy Thoeun.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-white smooth-transition">
+            <Link href="mailto:info@zbook.com?subject=Privacy%20Policy" className="hover:text-white smooth-transition">
               Privacy Policy
             </Link>
-            <Link href="#" className="hover:text-white smooth-transition">
+            <Link href="mailto:info@zbook.com?subject=Terms%20of%20Service" className="hover:text-white smooth-transition">
               Terms of Service
             </Link>
-            <Link href="#" className="hover:text-white smooth-transition">
+            <Link href="mailto:info@zbook.com?subject=Cookie%20Policy" className="hover:text-white smooth-transition">
               Cookie Policy
             </Link>
           </div>

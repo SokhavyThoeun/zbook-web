@@ -101,7 +101,8 @@ function BooksContent() {
           currentPage,
           itemsPerPage,
           category,
-          searchQuery
+          searchQuery,
+          sortBy
         );
 
         setBooks(response.data.data.books);
@@ -115,7 +116,7 @@ function BooksContent() {
     };
 
     fetchBooks();
-  }, [selectedCategory, searchQuery, currentPage]);
+  }, [selectedCategory, searchQuery, sortBy, currentPage]);
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId);

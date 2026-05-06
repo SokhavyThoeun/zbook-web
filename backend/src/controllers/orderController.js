@@ -7,16 +7,30 @@ const Order = require('../models/Order');
 const Book = require('../models/Book');
 const { sendSuccess, sendError } = require('../utils/response');
 
+const paymentMethods = [
+  'credit-card',
+  'bank-transfer',
+  'cash-on-delivery',
+  'mobile-money',
+  'aba-qr',
+  'acleda-qr',
+];
+
 /**
  * Create a new order
  * POST /api/orders
  */
 const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress, shippingPhone, paymentMethod } = req.body;
+    const { items, shippingAddress, shippingPhone, paymentMethod, notes } = req.body;
+    const selectedPaymentMethod = paymentMethod || 'cash-on-delivery';
 
     if (!items || items.length === 0) {
       return sendError(res, 400, 'Cart is empty');
+    }
+
+    if (!paymentMethods.includes(selectedPaymentMethod)) {
+      return sendError(res, 400, 'Unsupported payment method');
     }
 
     // Validate items and calculate totals
@@ -49,16 +63,20 @@ const createOrder = async (req, res) => {
 
       // Reduce stock
       book.stock -= item.quantity;
-      await book.save();
+      if (typeof book.save === 'function') {
+        await book.save();
+      }
     }
 
     // Calculate totals
     const shippingCost = subtotal > 50 ? 0 : 5; // Free shipping over $50
     const tax = subtotal * 0.1; // 10% tax
     const totalAmount = subtotal + shippingCost + tax;
+    const orderCount = await Order.countDocuments();
 
     // Create order
     const order = new Order({
+      orderNumber: `ORD-${Date.now().toString().slice(-6)}-${orderCount + 1}`,
       userId: req.userId,
       items: orderItems,
       totalQuantity,
@@ -68,13 +86,17 @@ const createOrder = async (req, res) => {
       totalAmount,
       shippingAddress,
       shippingPhone,
-      paymentMethod: paymentMethod || 'cash-on-delivery',
+      paymentMethod: selectedPaymentMethod,
+      notes,
     });
 
     await order.save();
 
     // Populate user and book details
-    await order.populate('userId items.bookId');
+    if (typeof order.populate === 'function') {
+      await order.populate('userId');
+      await order.populate('items.bookId');
+    }
 
     sendSuccess(res, 201, 'Order created successfully', order);
   } catch (error) {
@@ -155,7 +177,7 @@ const trackOrder = async (req, res) => {
     const { id } = req.params;
 
     const order = await Order.findById(id).select(
-      'orderNumber status paymentStatus trackingNumber estimatedDelivery actualDelivery items'
+      'orderNumber userId status paymentStatus trackingNumber estimatedDelivery actualDelivery items'
     );
 
     if (!order) {
@@ -208,10 +230,13 @@ const cancelOrder = async (req, res) => {
 
     // Restore stock
     for (const item of order.items) {
-      const book = await Book.findById(item.bookId);
+      const bookId = item.bookId?._id || item.bookId;
+      const book = await Book.findById(bookId);
       if (book) {
         book.stock += item.quantity;
-        await book.save();
+        if (typeof book.save === 'function') {
+          await book.save();
+        }
       }
     }
 

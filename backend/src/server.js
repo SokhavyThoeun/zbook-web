@@ -15,9 +15,9 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Middleware
+// Middleware - Allow all origins for public access
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: '*',
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));

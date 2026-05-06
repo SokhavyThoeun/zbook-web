@@ -7,6 +7,17 @@ const User = require('../models/User');
 const { hashPassword, comparePassword, generateToken } = require('../utils/auth');
 const { sendSuccess, sendError } = require('../utils/response');
 
+const sanitizeUser = (user) => {
+  const userData = typeof user.toJSON === 'function'
+    ? user.toJSON()
+    : typeof user.toObject === 'function'
+      ? user.toObject()
+      : { ...user };
+
+  delete userData.password;
+  return userData;
+};
+
 /**
  * Register a new user
  * POST /api/auth/register
@@ -45,11 +56,8 @@ const register = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    // Remove password from response
-    user.password = undefined;
-
     sendSuccess(res, 201, 'User registered successfully', {
-      user,
+      user: sanitizeUser(user),
       token,
     });
   } catch (error) {
@@ -88,11 +96,8 @@ const login = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    // Remove password from response
-    user.password = undefined;
-
     sendSuccess(res, 200, 'Login successful', {
-      user,
+      user: sanitizeUser(user),
       token,
     });
   } catch (error) {
@@ -113,7 +118,7 @@ const getProfile = async (req, res) => {
       return sendError(res, 404, 'User not found');
     }
 
-    sendSuccess(res, 200, 'Profile retrieved successfully', user);
+    sendSuccess(res, 200, 'Profile retrieved successfully', sanitizeUser(user));
   } catch (error) {
     console.error('Get profile error:', error);
     sendError(res, 500, 'Error retrieving profile');
@@ -144,7 +149,7 @@ const updateProfile = async (req, res) => {
       return sendError(res, 404, 'User not found');
     }
 
-    sendSuccess(res, 200, 'Profile updated successfully', user);
+    sendSuccess(res, 200, 'Profile updated successfully', sanitizeUser(user));
   } catch (error) {
     console.error('Update profile error:', error);
     sendError(res, 500, 'Error updating profile');

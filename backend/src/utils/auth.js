@@ -6,6 +6,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'zbook-local-development-secret';
+
 /**
  * Hash password
  * @param {string} password - Plain text password
@@ -32,7 +34,7 @@ const comparePassword = async (password, hash) => {
  * @returns {string} - JWT token
  */
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, {
+  return jwt.sign({ userId }, JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 };
@@ -41,4 +43,5 @@ module.exports = {
   hashPassword,
   comparePassword,
   generateToken,
+  JWT_SECRET,
 };

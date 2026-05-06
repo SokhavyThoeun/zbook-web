@@ -83,6 +83,76 @@ const stats = {
   totalRevenue: 0
 };
 
+const matchesCondition = (item, condition) => {
+  for (let key in condition) {
+    if (key === '$or') {
+      if (!condition.$or.some(orCondition => matchesCondition(item, orCondition))) {
+        return false;
+      }
+      continue;
+    }
+
+    const filterValue = condition[key];
+    const itemValue = item[key];
+
+    if (typeof filterValue === 'object' && filterValue !== null && !Array.isArray(filterValue)) {
+      if (filterValue.$regex) {
+        const regex = new RegExp(filterValue.$regex, filterValue.$options || '');
+        if (!regex.test(String(itemValue || ''))) return false;
+      } else if (filterValue.$ne !== undefined) {
+        if (itemValue === filterValue.$ne) return false;
+      } else if (filterValue.$gte !== undefined) {
+        if (itemValue < filterValue.$gte) return false;
+      } else if (filterValue.$lte !== undefined) {
+        if (itemValue > filterValue.$lte) return false;
+      } else if (filterValue.$gt !== undefined) {
+        if (itemValue <= filterValue.$gt) return false;
+      } else if (filterValue.$lt !== undefined) {
+        if (itemValue >= filterValue.$lt) return false;
+      } else if (Array.isArray(filterValue.$in)) {
+        if (!filterValue.$in.includes(itemValue)) return false;
+      }
+    } else if (itemValue !== filterValue) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const populateItem = (item, field) => {
+  if (!item) return item;
+
+  const fieldName = String(field || '').split(' ')[0];
+  if (fieldName === 'bookId' && item.bookId && typeof item.bookId === 'string') {
+    return {
+      ...item,
+      bookId: db.books.find(book => book._id === item.bookId) || item.bookId,
+    };
+  }
+
+  if (fieldName === 'userId' && item.userId && typeof item.userId === 'string') {
+    return {
+      ...item,
+      userId: db.users.find(user => user._id === item.userId) || item.userId,
+    };
+  }
+
+  if (fieldName === 'items.bookId' && Array.isArray(item.items)) {
+    return {
+      ...item,
+      items: item.items.map(orderItem => ({
+        ...orderItem,
+        bookId: typeof orderItem.bookId === 'string'
+          ? db.books.find(book => book._id === orderItem.bookId) || orderItem.bookId
+          : orderItem.bookId,
+      })),
+    };
+  }
+
+  return item;
+};
+
 // Mock Query Builder with enhanced features
 class MockQuery {
   constructor(collection, filter = {}) {
@@ -105,6 +175,10 @@ class MockQuery {
         this.sortField = field;
         this.sortOrder = 1;
       }
+    } else if (typeof field === 'object' && field !== null) {
+      const [sortField, sortOrder] = Object.entries(field)[0] || [];
+      this.sortField = sortField;
+      this.sortOrder = sortOrder === -1 ? -1 : 1;
     }
     return this;
   }
@@ -130,46 +204,7 @@ class MockQuery {
   }
 
   async exec() {
-    let results = this.collection.filter(item => {
-      for (let key in this.filter) {
-        const filterValue = this.filter[key];
-        const itemValue = item[key];
-
-        if (typeof filterValue === 'object' && filterValue !== null) {
-          if (filterValue.$regex) {
-            const regex = new RegExp(filterValue.$regex, filterValue.$options || '');
-            if (!regex.test(itemValue)) return false;
-          } else if (filterValue.$ne) {
-            if (itemValue === filterValue.$ne) return false;
-          } else if (filterValue.$gte !== undefined) {
-            if (itemValue < filterValue.$gte) return false;
-          } else if (filterValue.$lte !== undefined) {
-            if (itemValue > filterValue.$lte) return false;
-          } else if (filterValue.$gt !== undefined) {
-            if (itemValue <= filterValue.$gt) return false;
-          } else if (filterValue.$lt !== undefined) {
-            if (itemValue >= filterValue.$lt) return false;
-          } else if (Array.isArray(filterValue.$in)) {
-            if (!filterValue.$in.includes(itemValue)) return false;
-          } else if (Array.isArray(filterValue.$or)) {
-            const matches = filterValue.$or.some(cond => {
-              for (let condKey in cond) {
-                const condValue = cond[condKey];
-                if (typeof condValue === 'object' && condValue.$regex) {
-                  const regex = new RegExp(condValue.$regex, condValue.$options || '');
-                  if (!regex.test(item[condKey])) return false;
-                }
-              }
-              return true;
-            });
-            if (!matches) return false;
-          }
-        } else if (itemValue !== filterValue) {
-          return false;
-        }
-      }
-      return true;
-    });
+    let results = this.collection.filter(item => matchesCondition(item, this.filter));
 
     // Sort
     if (this.sortField) {
@@ -186,6 +221,13 @@ class MockQuery {
     results = results.slice(this.skipValue);
     if (this.limitValue) {
       results = results.slice(0, this.limitValue);
+    }
+
+    if (this.populateFields.length > 0) {
+      results = results.map(item => this.populateFields.reduce(
+        (current, field) => populateItem(current, field),
+        item
+      ));
     }
 
     return results;
@@ -375,8 +417,23 @@ class MockDocument {
     }
     this.createdAt = this.createdAt || new Date();
     this.updatedAt = new Date();
-    this._collection.push(this);
+    const existingIndex = this._collection.findIndex(item => item._id === this._id);
+    if (existingIndex > -1) {
+      this._collection[existingIndex] = this;
+    } else {
+      this._collection.push(this);
+    }
     return this;
+  }
+
+  async populate(field) {
+    Object.assign(this, populateItem(this, field));
+    return this;
+  }
+
+  toJSON() {
+    const { _collection, save, ...data } = this;
+    return data;
   }
 }
 
@@ -411,14 +468,43 @@ function createModel(collection, name) {
     };
   };
 
-  Model.findById = (id) => ({
-    populate: () => ({
-      exec: async () => collection.find(i => i._id === id) || null,
-      then: (resolve) => resolve(collection.find(i => i._id === id) || null)
-    }),
-    exec: async () => collection.find(i => i._id === id) || null,
-    then: (resolve) => resolve(collection.find(i => i._id === id) || null)
-  });
+  Model.findById = (id) => {
+    const populateFields = [];
+    const query = {
+      populate: (field) => {
+        populateFields.push(field);
+        return query;
+      },
+      select: () => query,
+      exec: async () => {
+        const item = collection.find(i => i._id === id);
+        if (!item) return null;
+
+        const populated = populateFields.reduce(
+          (current, field) => populateItem(current, field),
+          item
+        );
+        return new MockDocument(populated, collection);
+      },
+      then: (resolve, reject) => query.exec().then(resolve, reject),
+    };
+    return query;
+  };
+
+  Model.findByIdAndUpdate = async (id, update, options = {}) => {
+    const item = collection.find(i => i._id === id);
+    if (!item) return null;
+
+    const updateData = update.$set || update;
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] !== undefined) {
+        item[key] = updateData[key];
+      }
+    });
+    item.updatedAt = new Date();
+
+    return options.new ? item : { ...item, ...updateData };
+  };
 
   Model.create = async (data) => {
     const doc = new MockDocument(data, collection);
@@ -483,6 +569,13 @@ function createModel(collection, name) {
       return { deletedCount: 1 };
     }
     return { deletedCount: 0 };
+  };
+
+  Model.findOneAndDelete = async (filter = {}) => {
+    const idx = collection.findIndex(i => matchesCondition(i, filter));
+    if (idx === -1) return null;
+    const [deleted] = collection.splice(idx, 1);
+    return deleted;
   };
 
   Model.deleteMany = async (filter) => {

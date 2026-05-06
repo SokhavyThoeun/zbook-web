@@ -18,13 +18,20 @@ export const useAuthStore = create((set) => ({
       const storedToken = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       if (storedToken && storedUser) {
-        set({
-          token: storedToken,
-          user: JSON.parse(storedUser),
-          isAuthenticated: true,
-        });
-        // Set default auth header
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        try {
+          set({
+            token: storedToken,
+            user: JSON.parse(storedUser),
+            isAuthenticated: true,
+          });
+          // Set default auth header
+          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        } catch (error) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          delete axiosInstance.defaults.headers.common['Authorization'];
+          set({ user: null, token: null, isAuthenticated: false });
+        }
       }
     }
   },

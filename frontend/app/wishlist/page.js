@@ -15,13 +15,20 @@ import { wishlistAPI } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 
 export default function WishlistPage() {
-  const { token } = useAuthStore();
+  const { token, init } = useAuthStore();
   const { addItem } = useCartStore();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     const fetchWishlist = async () => {
       try {
@@ -40,7 +47,7 @@ export default function WishlistPage() {
   const handleRemove = async (bookId) => {
     try {
       await wishlistAPI.removeFromWishlist(bookId);
-      setWishlist(wishlist.filter((item) => item.bookId._id !== bookId));
+      setWishlist(wishlist.filter((item) => item.bookId?._id !== bookId));
     } catch (error) {
       console.error('Error removing from wishlist:', error);
     }
@@ -60,6 +67,18 @@ export default function WishlistPage() {
           >
             Login Now
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="h-96 rounded-lg bg-gray-300" />
+          ))}
         </div>
       </div>
     );
@@ -103,7 +122,7 @@ export default function WishlistPage() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {wishlist.map((item) => (
+        {wishlist.filter((item) => item.bookId).map((item) => (
           <motion.div
             key={item._id}
             initial={{ opacity: 0, scale: 0.9 }}

@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5001/api';
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -54,8 +54,8 @@ export const authAPI = {
 
 // Book APIs
 export const bookAPI = {
-  getAllBooks: (page, limit, category, search) =>
-    axiosInstance.get('/books', { params: { page, limit, category, search } }),
+  getAllBooks: (page, limit, category, search, sort) =>
+    axiosInstance.get('/books', { params: { page, limit, category, search, sort } }),
   getTrendingBooks: () => axiosInstance.get('/books/trending'),
   getNewBooks: () => axiosInstance.get('/books/new'),
   getPopularBooks: () => axiosInstance.get('/books/popular'),

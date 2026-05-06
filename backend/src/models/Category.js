@@ -30,6 +30,10 @@ if (global.usingMockDB) {
         type: String,
         default: 'Book',
       },
+      coverImage: {
+        type: String,
+        required: false,
+      },
       isActive: {
         type: Boolean,
         default: true,
