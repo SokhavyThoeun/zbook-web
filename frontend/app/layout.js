@@ -6,6 +6,7 @@
 import '@/styles/globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import HelpWidget from '@/components/HelpWidget';
 
 export const metadata = {
   title: 'Z Book - Modern Bookstore',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
       <body>
         <Header />
         <main className="min-h-screen">{children}</main>
+        <HelpWidget />
         <Footer />
       </body>
     </html>

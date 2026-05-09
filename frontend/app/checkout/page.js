@@ -28,6 +28,7 @@ const paymentMethods = [
     icon: QrCode,
     qrLabel: 'ABA',
     account: 'Z Book Store - 000 123 456',
+    qrImage: '/payment/aba-qr.png',
   },
   {
     id: 'acleda-qr',
@@ -36,6 +37,7 @@ const paymentMethods = [
     icon: QrCode,
     qrLabel: 'ACLEDA',
     account: 'Z Book Store - 000 987 654',
+    qrImage: '/payment/acleda-qr.png',
   },
   {
     id: 'bank-transfer',
@@ -52,11 +54,48 @@ const paymentMethods = [
   },
   {
     id: 'credit-card',
-    name: 'Credit Card',
-    description: 'Card payment request is recorded for manual confirmation.',
+    name: 'Credit / Visa Card',
+    description: 'Enter Visa, Mastercard, or credit card details for confirmation.',
     icon: CreditCard,
   },
 ];
+
+function QRImage({ payment }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!payment.qrImage || failed) {
+    return (
+      <div className="aspect-square rounded-lg bg-white p-4 shadow-inner">
+        <div className="grid h-full w-full grid-cols-5 grid-rows-5 gap-1">
+          {[...Array(25)].map((_, index) => (
+            <div
+              key={index}
+              className={`rounded-sm ${
+                [0, 1, 2, 5, 10, 20, 21, 22, 4, 9, 14, 19, 24, 12, 16, 18].includes(index)
+                  ? 'bg-gray-900'
+                  : 'bg-purple-100'
+              }`}
+            />
+          ))}
+        </div>
+        <p className="mt-2 text-center text-xs font-bold text-purple-700">
+          Add real QR at {payment.qrImage}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg bg-white p-2 shadow-inner">
+      <img
+        src={payment.qrImage}
+        alt={`${payment.name} QR code`}
+        onError={() => setFailed(true)}
+        className="aspect-square w-full rounded-md object-contain"
+      />
+    </div>
+  );
+}
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
@@ -70,6 +109,10 @@ export default function CheckoutPage() {
     shippingPhone: user?.phoneNumber || '',
     paymentMethod: 'cash-on-delivery',
     paymentReference: '',
+    cardName: '',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvc: '',
   });
 
   useEffect(() => {
@@ -99,6 +142,18 @@ export default function CheckoutPage() {
     }));
   };
 
+  const handleCardNumberChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 19);
+    const formatted = digits.replace(/(.{4})/g, '$1 ').trim();
+    setFormData((prev) => ({ ...prev, cardNumber: formatted }));
+  };
+
+  const handleExpiryChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+    const formatted = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    setFormData((prev) => ({ ...prev, cardExpiry: formatted }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -113,9 +168,23 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (formData.paymentMethod === 'credit-card') {
+      const cardDigits = formData.cardNumber.replace(/\D/g, '');
+      if (!formData.cardName || cardDigits.length < 13 || formData.cardExpiry.length < 5 || formData.cardCvc.length < 3) {
+        setError('Please complete the card details before placing the order.');
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
+      const cardDigits = formData.cardNumber.replace(/\D/g, '');
+      const paymentNotes = [
+        formData.paymentReference ? `Payment reference: ${formData.paymentReference}` : null,
+        formData.paymentMethod === 'credit-card' ? `Cardholder: ${formData.cardName}; Card ending: ${cardDigits.slice(-4)}` : null,
+      ].filter(Boolean).join(' | ');
+
       const orderData = {
         items: items.map((item) => ({
           bookId: item._id,
@@ -128,9 +197,7 @@ export default function CheckoutPage() {
         },
         shippingPhone: formData.shippingPhone,
         paymentMethod: formData.paymentMethod,
-        notes: formData.paymentReference
-          ? `Payment reference: ${formData.paymentReference}`
-          : undefined,
+        notes: paymentNotes || undefined,
       };
 
       const response = await orderAPI.createOrder(orderData);
@@ -255,6 +322,7 @@ export default function CheckoutPage() {
                 return (
                   <label
                     key={method.id}
+                    onClick={() => setFormData((prev) => ({ ...prev, paymentMethod: method.id }))}
                     className={`cursor-pointer rounded-lg border p-4 smooth-transition ${
                       active
                         ? 'border-purple-500 bg-purple-50 shadow-md'
@@ -285,21 +353,8 @@ export default function CheckoutPage() {
 
             {selectedPayment.qrLabel && (
               <div className="rounded-xl border border-purple-100 bg-purple-50 p-5">
-                <div className="grid gap-5 md:grid-cols-[160px_1fr]">
-                  <div className="aspect-square rounded-lg bg-white p-4 shadow-inner">
-                    <div className="grid h-full w-full grid-cols-5 grid-rows-5 gap-1">
-                      {[...Array(25)].map((_, index) => (
-                        <div
-                          key={index}
-                          className={`rounded-sm ${
-                            [0, 1, 2, 5, 10, 20, 21, 22, 4, 9, 14, 19, 24, 12, 16, 18].includes(index)
-                              ? 'bg-gray-900'
-                              : 'bg-purple-100'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                <div className="grid gap-5 md:grid-cols-[180px_1fr]">
+                  <QRImage payment={selectedPayment} />
                   <div className="space-y-3">
                     <h3 className="text-lg font-bold text-gray-900">{selectedPayment.qrLabel} payment</h3>
                     <p className="text-sm text-gray-600">Total to pay: <span className="font-bold text-purple-700">{formatPrice(grandTotal)}</span></p>
@@ -315,6 +370,67 @@ export default function CheckoutPage() {
                       />
                     </label>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {formData.paymentMethod === 'credit-card' && (
+              <div className="rounded-xl border border-purple-100 bg-purple-50 p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-purple-700" />
+                  <h3 className="text-lg font-bold text-gray-900">Card Details</h3>
+                </div>
+                <div className="grid gap-4">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-gray-700">Name on Card</span>
+                    <input
+                      name="cardName"
+                      value={formData.cardName}
+                      onChange={handleInputChange}
+                      placeholder="Sokhavy Thoeun"
+                      autoComplete="cc-name"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-gray-700">Card Number</span>
+                    <input
+                      value={formData.cardNumber}
+                      onChange={handleCardNumberChange}
+                      placeholder="4242 4242 4242 4242"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-bold text-gray-700">Expiry</span>
+                      <input
+                        value={formData.cardExpiry}
+                        onChange={handleExpiryChange}
+                        placeholder="MM/YY"
+                        inputMode="numeric"
+                        autoComplete="cc-exp"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-bold text-gray-700">CVC</span>
+                      <input
+                        name="cardCvc"
+                        value={formData.cardCvc}
+                        onChange={(event) => setFormData((prev) => ({ ...prev, cardCvc: event.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                        placeholder="123"
+                        inputMode="numeric"
+                        autoComplete="cc-csc"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Card details are used for checkout confirmation only in this demo. Do not store full card numbers without a real payment processor.
+                  </p>
                 </div>
               </div>
             )}

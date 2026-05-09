@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" role="img" aria-label="ACLEDA QR placeholder">
+  <rect width="640" height="640" fill="#ffffff"/>
+  <rect y="0" width="640" height="36" fill="#163a63"/>
+  <text x="260" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="50" font-weight="700" fill="#163a63">ACLEDA</text>
+  <circle cx="430" cy="88" r="42" fill="#163a63"/>
+  <path d="M402 84c40-36 64-27 86-8-32 2-46 26-51 48-10-18-22-31-35-40z" fill="#d2ad2f"/>
+  <text x="320" y="158" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#111111">Scan. Pay Done.</text>
+  <rect x="160" y="205" width="320" height="320" rx="28" fill="#ffffff" stroke="#d7d7d7" stroke-width="10"/>
+  <g fill="#111111">
+    <rect x="190" y="235" width="60" height="60"/><rect x="205" y="250" width="30" height="30" fill="#fff"/><rect x="215" y="260" width="10" height="10"/>
+    <rect x="390" y="235" width="60" height="60"/><rect x="405" y="250" width="30" height="30" fill="#fff"/><rect x="415" y="260" width="10" height="10"/>
+    <rect x="190" y="435" width="60" height="60"/><rect x="205" y="450" width="30" height="30" fill="#fff"/><rect x="215" y="460" width="10" height="10"/>
+    <rect x="275" y="250" width="20" height="20"/><rect x="315" y="250" width="20" height="20"/><rect x="355" y="250" width="20" height="20"/>
+    <rect x="270" y="300" width="30" height="30"/><rect x="320" y="300" width="20" height="20"/><rect x="360" y="310" width="30" height="30"/>
+    <rect x="250" y="350" width="40" height="20"/><rect x="310" y="350" width="30" height="30"/><rect x="360" y="360" width="20" height="40"/>
+    <rect x="270" y="410" width="25" height="25"/><rect x="320" y="405" width="45" height="20"/><rect x="390" y="395" width="35" height="35"/>
+    <rect x="255" y="455" width="35" height="20"/><rect x="315" y="445" width="20" height="45"/><rect x="355" y="455" width="35" height="20"/>
+  </g>
+  <circle cx="320" cy="365" r="42" fill="#111111"/>
+  <text x="320" y="383" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#ffffff">$</text>
+  <text x="320" y="575" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#163a63">THOEUN SOKHAVY</text>
+</svg>

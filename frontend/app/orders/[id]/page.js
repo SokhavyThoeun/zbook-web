@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle, Clock, Package, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, MapPin, Package, Truck, XCircle } from 'lucide-react';
 import { orderAPI } from '@/lib/api';
 import { formatDate, formatPrice } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
@@ -35,6 +35,7 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const { token, init } = useAuthStore();
   const [order, setOrder] = useState(null);
+  const [tracking, setTracking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
@@ -53,9 +54,19 @@ export default function OrderDetailPage() {
 
       try {
         setError('');
-        // Use the trackOrder API for richer status/timeline info
-        const response = await orderAPI.trackOrder(id);
-        setOrder(response.data.data);
+        const [orderResponse, trackingResponse] = await Promise.allSettled([
+          orderAPI.getOrderById(id),
+          orderAPI.trackOrder(id),
+        ]);
+
+        if (orderResponse.status === 'rejected') {
+          throw orderResponse.reason;
+        }
+
+        setOrder(orderResponse.value.data.data);
+        if (trackingResponse.status === 'fulfilled') {
+          setTracking(trackingResponse.value.data.data);
+        }
       } catch (requestError) {
         setError(requestError.response?.data?.message || 'Could not load this order.');
       } finally {
@@ -73,6 +84,7 @@ export default function OrderDetailPage() {
     try {
       const response = await orderAPI.cancelOrder(id);
       setOrder(response.data.data);
+      setTracking((current) => current ? { ...current, status: response.data.data.status } : current);
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Could not cancel this order.');
     } finally {
@@ -118,7 +130,8 @@ export default function OrderDetailPage() {
     );
   }
 
-  const currentStep = statusSteps.findIndex((step) => step.id === order.status);
+  const currentStatus = tracking?.status || order.status;
+  const currentStep = statusSteps.findIndex((step) => step.id === currentStatus);
   const activeStep = currentStep === -1 ? 0 : currentStep;
 
   return (
@@ -135,7 +148,7 @@ export default function OrderDetailPage() {
           <p className="mt-2 text-gray-600">Placed {formatDate(order.createdAt)}</p>
         </div>
 
-        {order.status === 'pending' && (
+        {currentStatus === 'pending' && (
           <button
             onClick={handleCancel}
             disabled={cancelling}
@@ -156,7 +169,7 @@ export default function OrderDetailPage() {
         <div className="grid gap-4 md:grid-cols-4">
           {statusSteps.map((step, index) => {
             const Icon = step.icon;
-            const complete = order.status === 'cancelled' ? false : index <= activeStep;
+            const complete = currentStatus === 'cancelled' ? false : index <= activeStep;
 
             return (
               <div key={step.id} className={`rounded-lg border p-4 ${complete ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'}`}>
@@ -166,9 +179,34 @@ export default function OrderDetailPage() {
             );
           })}
         </div>
-        {order.status === 'cancelled' && (
+        {currentStatus === 'cancelled' && (
           <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 font-bold text-red-700">This order was cancelled.</p>
         )}
+        <div className="mt-6 grid gap-3 border-t border-gray-100 pt-5 md:grid-cols-3">
+          <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4">
+            <Package className="mt-0.5 h-5 w-5 text-purple-600" />
+            <div>
+              <p className="text-xs font-bold uppercase text-gray-500">Current Status</p>
+              <p className="font-bold capitalize text-gray-900">{currentStatus}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4">
+            <Truck className="mt-0.5 h-5 w-5 text-purple-600" />
+            <div>
+              <p className="text-xs font-bold uppercase text-gray-500">Tracking Number</p>
+              <p className="font-bold text-gray-900">{tracking?.trackingNumber || order.trackingNumber || 'Preparing soon'}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4">
+            <MapPin className="mt-0.5 h-5 w-5 text-purple-600" />
+            <div>
+              <p className="text-xs font-bold uppercase text-gray-500">Estimated Delivery</p>
+              <p className="font-bold text-gray-900">
+                {tracking?.estimatedDelivery ? formatDate(tracking.estimatedDelivery) : '2-4 days after confirmation'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">

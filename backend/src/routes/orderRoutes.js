@@ -13,8 +13,8 @@ router.use(authMiddleware);
 // Order management
 router.post('/', orderController.createOrder);
 router.get('/', orderController.getUserOrders);
-router.get('/:id', orderController.getOrderById);
 router.get('/:id/track', orderController.trackOrder);
+router.get('/:id', orderController.getOrderById);
 router.post('/:id/cancel', orderController.cancelOrder);
 
 module.exports = router;

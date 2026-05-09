@@ -13,9 +13,11 @@ import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
 import { debounce } from '@/lib/utils';
 import { bookAPI } from '@/lib/api';
+import { languages, useLanguage } from '@/lib/i18n';
 
 export default function Header() {
   const router = useRouter();
+  const { language, setLanguage, t } = useLanguage();
   const { user, logout, token } = useAuthStore();
   const { items } = useCartStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -83,7 +85,7 @@ export default function Header() {
               <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search books, authors..."
+                placeholder={t.search}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/50 border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500 smooth-transition"
@@ -119,9 +121,9 @@ export default function Header() {
           </form>
 
           <nav className="hidden lg:flex items-center gap-5 text-sm font-semibold text-gray-700">
-            <Link href="/books" className="hover:text-purple-600 smooth-transition">Books</Link>
-            <Link href="/categories" className="hover:text-purple-600 smooth-transition">Categories</Link>
-            <Link href="/orders" className="hover:text-purple-600 smooth-transition">Orders</Link>
+            <Link href="/books" className="hover:text-purple-600 smooth-transition">{t.books}</Link>
+            <Link href="/categories" className="hover:text-purple-600 smooth-transition">{t.categories}</Link>
+            <Link href="/orders" className="hover:text-purple-600 smooth-transition">{t.orders}</Link>
           </nav>
 
           {/* Navigation Icons */}
@@ -144,6 +146,19 @@ export default function Header() {
               )}
             </Link>
 
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className="hidden sm:block rounded-lg border border-purple-100 bg-white/70 px-2 py-1 text-xs font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-label="Language"
+            >
+              {languages.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.shortLabel}
+                </option>
+              ))}
+            </select>
+
             {/* Auth Links */}
             {!token ? (
               <>
@@ -151,13 +166,13 @@ export default function Header() {
                   href="/login"
                   className="hidden sm:inline px-4 py-2 text-purple-600 font-medium hover:text-purple-700 smooth-transition"
                 >
-                  Login
+                  {t.login}
                 </Link>
                 <Link
                   href="/register"
                   className="hidden sm:inline px-4 py-2 gradient-btn text-white rounded-lg font-medium smooth-transition"
                 >
-                  Sign Up
+                  {t.signup}
                 </Link>
               </>
             ) : (
@@ -195,7 +210,7 @@ export default function Header() {
               <Search className="w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search books..."
+                placeholder={t.searchMobile}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="flex-1 px-3 py-2 rounded-lg bg-white/50 border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -203,31 +218,43 @@ export default function Header() {
             </form>
             <div className="grid grid-cols-2 gap-2">
               <Link href="/books" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
-                Books
+                {t.books}
               </Link>
               <Link href="/categories" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
-                Categories
+                {t.categories}
               </Link>
               <Link href="/wishlist" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
-                Wishlist
+                {t.wishlist}
               </Link>
               <Link href="/orders" onClick={() => setIsMenuOpen(false)} className="px-4 py-2 text-center rounded-lg bg-white/50 font-medium text-gray-700">
-                Orders
+                {t.orders}
               </Link>
             </div>
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className="w-full rounded-lg border border-purple-100 bg-white/70 px-3 py-2 text-sm font-bold text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-label="Language"
+            >
+              {languages.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
             {!token ? (
               <div className="flex gap-2">
                 <Link
                   href="/login"
                   className="flex-1 px-4 py-2 text-center text-purple-600 font-medium border border-purple-600 rounded-lg hover:bg-purple-50 smooth-transition"
                 >
-                  Login
+                  {t.login}
                 </Link>
                 <Link
                   href="/register"
                   className="flex-1 px-4 py-2 text-center gradient-btn text-white rounded-lg font-medium smooth-transition"
                 >
-                  Sign Up
+                  {t.signup}
                 </Link>
               </div>
             ) : (
@@ -237,7 +264,7 @@ export default function Header() {
                   className="flex-1 px-4 py-2 text-center text-purple-600 font-medium border border-purple-600 rounded-lg hover:bg-purple-50 smooth-transition"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Profile
+                  {t.profile}
                 </Link>
                 <button
                   onClick={() => {
@@ -246,7 +273,7 @@ export default function Header() {
                   }}
                   className="flex-1 px-4 py-2 text-center text-red-600 font-medium border border-red-200 rounded-lg hover:bg-red-50 smooth-transition"
                 >
-                  Logout
+                  {t.logout}
                 </button>
               </div>
             )}

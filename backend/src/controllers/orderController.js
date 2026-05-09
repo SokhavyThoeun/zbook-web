@@ -16,6 +16,12 @@ const paymentMethods = [
   'acleda-qr',
 ];
 
+const getDocId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'object') return String(value._id || value.id || '');
+  return String(value);
+};
+
 /**
  * Create a new order
  * POST /api/orders
@@ -86,6 +92,8 @@ const createOrder = async (req, res) => {
       totalAmount,
       shippingAddress,
       shippingPhone,
+      status: 'pending',
+      paymentStatus: selectedPaymentMethod === 'cash-on-delivery' ? 'pending' : 'pending',
       paymentMethod: selectedPaymentMethod,
       notes,
     });
@@ -157,7 +165,7 @@ const getOrderById = async (req, res) => {
     }
 
     // Verify ownership
-    if (order.userId._id.toString() !== req.userId) {
+    if (getDocId(order.userId) !== req.userId) {
       return sendError(res, 403, 'Unauthorized to view this order');
     }
 
@@ -176,16 +184,16 @@ const trackOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id).select(
-      'orderNumber userId status paymentStatus trackingNumber estimatedDelivery actualDelivery items'
-    );
+    const order = await Order.findById(id)
+      .populate('userId')
+      .populate('items.bookId');
 
     if (!order) {
       return sendError(res, 404, 'Order not found');
     }
 
     // Verify ownership
-    if (order.userId.toString() !== req.userId) {
+    if (getDocId(order.userId) !== req.userId) {
       return sendError(res, 403, 'Unauthorized');
     }
 
@@ -196,6 +204,7 @@ const trackOrder = async (req, res) => {
       trackingNumber: order.trackingNumber,
       estimatedDelivery: order.estimatedDelivery,
       actualDelivery: order.actualDelivery,
+      items: order.items,
       timeline: getOrderTimeline(order.status),
     };
 
@@ -220,7 +229,7 @@ const cancelOrder = async (req, res) => {
       return sendError(res, 404, 'Order not found');
     }
 
-    if (order.userId.toString() !== req.userId) {
+    if (getDocId(order.userId) !== req.userId) {
       return sendError(res, 403, 'Unauthorized');
     }
 
